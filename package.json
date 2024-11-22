@@ -5,7 +5,8 @@
   "scripts": {
     "parse": "bun parse.ts",
     "refresh": "bun refresh.ts",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "build": "bun refresh && bun parse && rm -f data/*.html"
   },
   "devDependencies": {
     "@types/bun": "latest",

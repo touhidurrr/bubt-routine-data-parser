@@ -1,0 +1,23 @@
+{
+  "name": "best-data-scrap",
+  "module": "parse.ts",
+  "type": "module",
+  "scripts": {
+    "parse": "bun parse.ts",
+    "refresh": "bun refresh.ts",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/bytes": "^3.1.4",
+    "@types/jsdom": "^21.1.7",
+    "prettier": "^3.3.3"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "bytes": "^3.1.2",
+    "jsdom": "^25.0.1"
+  }
+}

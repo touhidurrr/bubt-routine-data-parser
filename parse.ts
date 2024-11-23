@@ -1,5 +1,6 @@
-import { format } from "bytes";
+import { format as formatBytes } from "bytes";
 import { JSDOM } from "jsdom";
+import { format as prettierFormat } from "prettier";
 
 const htmlText = await Bun.file("data/routine.php.html").text();
 const { document } = new JSDOM(htmlText).window;
@@ -20,6 +21,12 @@ const dataLength = Math.min(
   routineFooterTables.length,
 );
 
+const programs: {
+  [programName: string]: {
+    [intake: number]: string[];
+  };
+} = {};
+
 const courseCodeToTitleMap: { [courseCode: string]: string } = {};
 const facultyIdToNameMap: { [facultyCode: string]: string } = {};
 
@@ -32,13 +39,33 @@ type Class = {
 
 type Routine = {
   program: string;
-  intake: string;
+  intake: number;
   section: string;
   semester: string;
   classes: (Class | null)[][]; // 7 days (SAT to FRI), 8 periods
 };
 
 const routines: Routine[] = [];
+
+function sanitizeText(text: string): string {
+  return text.replaceAll(/\s+/g, " ").trim();
+}
+
+function addRoutineDataToPrograms(routine: Routine) {
+  if (!programs[routine.program]) {
+    programs[routine.program] = {
+      [routine.intake]: [routine.section],
+    };
+    return;
+  }
+
+  if (!programs[routine.program][routine.intake]) {
+    programs[routine.program][routine.intake] = [routine.section];
+    return;
+  }
+
+  programs[routine.program][routine.intake].push(routine.section);
+}
 
 for (let i = 0; i < dataLength; i++) {
   const routineInfoTable = routineInfoTables[i];
@@ -60,7 +87,7 @@ for (let i = 0; i < dataLength; i++) {
   // make base routine object
   const routine: Routine = {
     program: "",
-    intake: "",
+    intake: NaN,
     section: "",
     semester: "",
     classes: [],
@@ -75,11 +102,14 @@ for (let i = 0; i < dataLength; i++) {
     .slice(intakeSectionText.indexOf(":") + 1)
     .trim()
     .split("-");
-  routine.intake = intakeText.trim();
-  routine.section = sectionText.trim();
+
+  routine.intake = parseInt(intakeText.trim());
+  routine.section = sanitizeText(sectionText);
 
   routine.program = programText.slice(programText.indexOf(":") + 1).trim();
   routine.semester = semesterText.slice(semesterText.indexOf(":") + 1).trim();
+
+  addRoutineDataToPrograms(routine);
 
   // parse routineTable
   const routineTableTrs = [...routineTable.getElementsByTagName("tr")];
@@ -111,13 +141,16 @@ for (let i = 0; i < dataLength; i++) {
 
 const dataPath = "data/routines.json";
 const data = {
+  programs,
   courseCodeToTitleMap,
   facultyIdToNameMap,
   routines,
 };
 
-const jsonText = JSON.stringify(data, null, 2);
+const jsonText = await prettierFormat(JSON.stringify(data), { parser: "json" });
 
-await Bun.write(dataPath, JSON.stringify(data, null, 2));
+await Bun.write(dataPath, jsonText);
 
-console.log(`Saved parsed json to ${dataPath} (${format(jsonText.length)})`);
+console.log(
+  `Saved parsed json to ${dataPath} (${formatBytes(jsonText.length)})`,
+);

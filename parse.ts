@@ -42,6 +42,7 @@ type Routine = {
   intake: number;
   section: string;
   semester: string;
+  periods: string[];
   classes: (Class | null)[][]; // 7 days (SAT to FRI), 8 periods
 };
 
@@ -90,6 +91,7 @@ for (let i = 0; i < dataLength; i++) {
     intake: NaN,
     section: "",
     semester: "",
+    periods: [],
     classes: [],
   };
 
@@ -114,7 +116,10 @@ for (let i = 0; i < dataLength; i++) {
   // parse routineTable
   const routineTableTrs = [...routineTable.getElementsByTagName("tr")];
 
-  routineTableTrs.shift(); // Remove the header row
+  const periodThs = [...routineTableTrs.shift()!.getElementsByTagName("th")];
+  periodThs.shift(); // Remove the first cell
+  routine.periods = periodThs.map((th) => sanitizeText(th.textContent || ""));
+
   routine.classes = routineTableTrs.map((tr) => {
     const tds = [...tr.getElementsByTagName("td")];
     return tds.map((td) => {

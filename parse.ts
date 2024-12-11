@@ -146,6 +146,7 @@ for (let i = 0; i < dataLength; i++) {
 
 const dataPath = "data/routines.json";
 const data = {
+  updated: new Date(),
   programs,
   courseCodeToTitleMap,
   facultyIdToNameMap,
